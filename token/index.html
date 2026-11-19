@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E7C6B">
+<meta name="robots" content="noindex">
+<title>Live token · TokenLive</title>
+<style>
+  :root { --brand:#0E7C6B; --brand2:#0A5F52; --ink:#14211F; --muted:#5B6B68; --bg:#F3F7F6; --card:#fff; --line:#DCE6E4; --warn:#B45309; --warnbg:#FFF4E5; --ok:#15803D; --okbg:#E8F7EE; --hot:#B91C1C; --hotbg:#FDECEC; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Tamil","Noto Sans Devanagari",sans-serif; -webkit-text-size-adjust:100%; }
+  main { max-width:480px; margin:0 auto; padding:16px 16px calc(28px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:14px; }
+  header { display:flex; align-items:flex-start; gap:10px; }
+  header .t { flex:1; min-width:0; }
+  h1 { font-size:20px; margin:0; line-height:1.25; overflow-wrap:anywhere; }
+  .doc { color:var(--muted); margin:2px 0 0; overflow-wrap:anywhere; }
+  .langs { display:flex; gap:4px; flex-shrink:0; }
+  .langs button { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; padding:6px 10px; font:inherit; font-size:14px; min-height:36px; cursor:pointer; }
+  .langs button[aria-pressed="true"] { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:18px; }
+  .now { text-align:center; padding:22px 18px 18px; }
+  .label { text-transform:uppercase; letter-spacing:.06em; font-size:13px; font-weight:700; color:var(--muted); margin:0; }
+  .big { font-size:min(34vw,148px); font-weight:800; line-height:1; letter-spacing:-.03em; color:var(--brand2); margin:6px 0 4px; font-variant-numeric:tabular-nums; }
+  .big.dim { color:#9FB3AF; }
+  .live { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--muted); }
+  .dot { width:9px; height:9px; border-radius:50%; background:#9CA3AF; }
+  .live.on .dot { background:#16A34A; box-shadow:0 0 0 0 rgba(22,163,74,.5); animation:pulse 2s infinite; }
+  @keyframes pulse { 70% { box-shadow:0 0 0 8px rgba(22,163,74,0); } 100% { box-shadow:0 0 0 0 rgba(22,163,74,0); } }
+  @media (prefers-reduced-motion: reduce) { .live.on .dot { animation:none; } }
+  .banner { border-radius:14px; padding:12px 14px; font-weight:600; }
+  .banner.warn { background:var(--warnbg); color:var(--warn); }
+  .banner.ok { background:var(--okbg); color:var(--ok); }
+  .banner.hot { background:var(--hotbg); color:var(--hot); }
+  .mine { display:flex; flex-direction:column; gap:12px; }
+  .row { display:flex; gap:10px; align-items:center; }
+  input[type=number] { flex:1; min-width:0; font:inherit; font-size:24px; font-weight:700; padding:12px 14px; border:2px solid var(--line); border-radius:14px; background:#fff; color:var(--ink); }
+  input[type=number]:focus { outline:none; border-color:var(--brand); }
+  .btn { font:inherit; font-weight:700; border:0; border-radius:14px; padding:14px 18px; min-height:52px; background:var(--brand); color:#fff; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--brand); border:2px solid var(--line); min-height:44px; padding:8px 14px; }
+  .yours { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+  .yours .n { font-size:44px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .eta { font-size:22px; font-weight:800; margin:0; }
+  .sub { color:var(--muted); margin:0; }
+  .meter { height:10px; border-radius:99px; background:#E5EEEC; overflow:hidden; }
+  .meter i { display:block; height:100%; background:var(--brand); border-radius:99px; transition:width .6s ease; }
+  .turn { text-align:center; background:var(--brand); color:#fff; border-color:var(--brand); }
+  .turn .eta { font-size:26px; }
+  .turn .label, .turn .sub, .turn .n { color:#fff; }
+  .turn .btn.ghost { color:#fff; border-color:rgba(255,255,255,.55); }
+  .turn [data-t=keep] { display:none; }
+  .foot { color:var(--muted); font-size:13px; text-align:center; }
+  .foot a { color:inherit; }
+  .hide { display:none !important; }
+  .center { text-align:center; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="t"><h1 id="clinic">TokenLive</h1><p class="doc" id="doctor"></p></div>
+    <div class="langs" role="group" aria-label="Language">
+      <button data-lang="en" lang="en">EN</button><button data-lang="ta" lang="ta">தமிழ்</button><button data-lang="hi" lang="hi">हिं</button>
+    </div>
+  </header>
+
+  <section class="card now" aria-live="polite">
+    <p class="label" data-t="now"></p>
+    <div class="big dim" id="current">–</div>
+    <span class="live" id="live"><span class="dot"></span><span id="liveText"></span></span>
+  </section>
+
+  <div class="banner hide" id="status"></div>
+
+  <section class="card mine" id="ask">
+    <label class="label" for="tok" data-t="enter"></label>
+    <div class="row"><input id="tok" type="number" inputmode="numeric" min="1" max="9999" placeholder="23"><button class="btn" id="save" data-t="show"></button></div>
+  </section>
+
+  <section class="card mine hide" id="mineCard" aria-live="polite">
+    <div class="yours"><span class="label" data-t="yours"></span><span class="n" id="mineNum"></span></div>
+    <p class="eta" id="eta"></p>
+    <p class="sub" id="etaSub"></p>
+    <div class="meter" id="meterWrap"><i id="meter" style="width:0"></i></div>
+    <div class="row"><button class="btn ghost" id="change" data-t="change"></button><button class="btn ghost hide" id="alerts" data-t="alerts"></button></div>
+    <p class="sub" data-t="keep"></p>
+  </section>
+
+  <p class="foot"><span data-t="estimates"></span><br>TokenLive · by KayBuilds</p>
+</main>
+
+<script src="logic.js"></script>
+<script>
+(function () {
+  'use strict';
+  var STR = {
+    en: { now:'Now serving', enter:'Your token number', show:'Show my wait', yours:'Your token', change:'Change token', alerts:'Alert me', keep:'Keep this page open. We will beep when your turn is near.',
+      estimates:'Times are estimates. Please follow the clinic staff.', live:'Live', connecting:'Connecting…', offline:'No connection, retrying…', updated:'Updated {x}',
+      ahead1:'1 person before you', aheadN:'{n} people before you', ahead0:'You are next', inMin:'Your turn in about {a}–{b} min', around:'Around {t}',
+      near:'Your turn is near. Please come to the clinic.', turn:'It’s your turn! Please go in.', passed:'Your number has been called. Please speak to the reception.',
+      brk:'Doctor is on a break. Back around {t}.', brk0:'Doctor is on a short break.', notyet:'Doctor has not arrived yet. Expected around {t}.', notyet0:'Doctor has not arrived yet.',
+      closed:'The clinic has closed this session.', start:'Waiting for the clinic to start.', stale:'This queue has not been updated since {t}.', nolink:'This link is incomplete. Please scan the QR code at the clinic again.',
+      justnow:'just now', minago:'{n} min ago', given:'{n} tokens given', notifTitle:'Your turn is near', notifBody:'Token {n}: please come to the clinic.' },
+    ta: { now:'தற்போதைய டோக்கன்', enter:'உங்கள் டோக்கன் எண்', show:'காத்திருப்பு நேரம்', yours:'உங்கள் டோக்கன்', change:'டோக்கனை மாற்று', alerts:'அறிவிப்பு', keep:'இந்தப் பக்கத்தைத் திறந்தே வைத்திருங்கள். உங்கள் முறை நெருங்கும்போது ஒலி எழுப்புவோம்.',
+      estimates:'நேரங்கள் தோராயமானவை. கிளினிக் பணியாளர்களின் வழிகாட்டலைப் பின்பற்றவும்.', live:'நேரலை', connecting:'இணைக்கிறது…', offline:'இணைப்பு இல்லை, மீண்டும் முயல்கிறது…', updated:'{x} புதுப்பிக்கப்பட்டது',
+      ahead1:'உங்களுக்கு முன் 1 நபர்', aheadN:'உங்களுக்கு முன் {n} பேர்', ahead0:'அடுத்தது நீங்கள்தான்', inMin:'சுமார் {a}–{b} நிமிடங்களில் உங்கள் முறை', around:'சுமார் {t} மணிக்கு',
+      near:'உங்கள் முறை நெருங்குகிறது. கிளினிக்கிற்கு வாருங்கள்.', turn:'உங்கள் முறை வந்துவிட்டது! உள்ளே செல்லவும்.', passed:'உங்கள் எண் அழைக்கப்பட்டுவிட்டது. வரவேற்பில் கேளுங்கள்.',
+      brk:'மருத்துவர் இடைவேளையில் உள்ளார். சுமார் {t} மணிக்குத் திரும்புவார்.', brk0:'மருத்துவர் சிறிய இடைவேளையில் உள்ளார்.', notyet:'மருத்துவர் இன்னும் வரவில்லை. சுமார் {t} மணிக்கு வருவார்.', notyet0:'மருத்துவர் இன்னும் வரவில்லை.',
+      closed:'இந்த அமர்வு முடிந்துவிட்டது.', start:'கிளினிக் தொடங்கக் காத்திருக்கிறது.', stale:'{t} முதல் இந்த வரிசை புதுப்பிக்கப்படவில்லை.', nolink:'இந்த இணைப்பு முழுமையாக இல்லை. கிளினிக்கில் உள்ள QR குறியீட்டை மீண்டும் ஸ்கேன் செய்யவும்.',
+      justnow:'இப்போது', minago:'{n} நிமி முன்', given:'{n} டோக்கன்கள் வழங்கப்பட்டன', notifTitle:'உங்கள் முறை நெருங்குகிறது', notifBody:'டோக்கன் {n}: கிளினிக்கிற்கு வாருங்கள்.' },
+    hi: { now:'अभी चल रहा टोकन', enter:'आपका टोकन नंबर', show:'मेरा इंतज़ार देखें', yours:'आपका टोकन', change:'टोकन बदलें', alerts:'अलर्ट', keep:'यह पेज खुला रखें। बारी नज़दीक आने पर हम बीप करेंगे।',
+      estimates:'समय अनुमानित है। कृपया क्लिनिक स्टाफ़ के निर्देश मानें।', live:'लाइव', connecting:'जुड़ रहा है…', offline:'कनेक्शन नहीं, फिर कोशिश हो रही है…', updated:'{x} अपडेट हुआ',
+      ahead1:'आपसे पहले 1 व्यक्ति', aheadN:'आपसे पहले {n} लोग', ahead0:'अगली बारी आपकी है', inMin:'लगभग {a}–{b} मिनट में आपकी बारी', around:'करीब {t} बजे',
+      near:'आपकी बारी नज़दीक है। कृपया क्लिनिक पहुँचें।', turn:'आपकी बारी आ गई! कृपया अंदर जाएँ।', passed:'आपका नंबर बुलाया जा चुका है। कृपया रिसेप्शन से बात करें।',
+      brk:'डॉक्टर ब्रेक पर हैं। करीब {t} बजे लौटेंगे।', brk0:'डॉक्टर छोटे ब्रेक पर हैं।', notyet:'डॉक्टर अभी नहीं आए हैं। करीब {t} बजे आएँगे।', notyet0:'डॉक्टर अभी नहीं आए हैं।',
+      closed:'क्लिनिक का यह सत्र बंद हो गया है।', start:'क्लिनिक शुरू होने का इंतज़ार।', stale:'{t} के बाद से यह कतार अपडेट नहीं हुई है।', nolink:'यह लिंक अधूरा है। कृपया क्लिनिक का QR कोड फिर से स्कैन करें।',
+      justnow:'अभी', minago:'{n} मिनट पहले', given:'{n} टोकन दिए गए', notifTitle:'आपकी बारी नज़दीक है', notifBody:'टोकन {n}: कृपया क्लिनिक पहुँचें।' }
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var q = new URLSearchParams(location.search);
+  var topic = q.get('c') || '';
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+  };
+  var lang = store.get('tl-lang') || (/^ta/i.test(navigator.language) ? 'ta' : /^hi/i.test(navigator.language) ? 'hi' : 'en');
+  if (!STR[lang]) lang = 'en';
+  var state = null, net = 'connecting', mine = 0, lastKind = '', es = null, lastOk = 0;
+  function online() { lastOk = Date.now(); if (net !== 'live') { net = 'live'; render(); } }
+  // Only call it offline when nothing has come through for a while: the live connection reconnects on its own.
+  function maybeOffline() { if (Date.now() - lastOk > 70000) { net = 'offline'; render(); } }
+
+  function t(k, vars) {
+    var s = (STR[lang] && STR[lang][k]) || STR.en[k] || k;
+    if (vars) for (var v in vars) s = s.split('{' + v + '}').join(vars[v]);
+    return s;
+  }
+  function clock(ms) {
+    var loc = lang === 'ta' ? 'ta-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN';
+    try { return new Date(ms).toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit' }); } catch (e) { return new Date(ms).toTimeString().slice(0, 5); }
+  }
+  function tokenKey() { return 'tl-mine-' + topic + '-' + (state ? state.s : ''); }
+
+  // A token in the link (sent by the clinic on WhatsApp) wins over a saved one.
+  var linkToken = TL.int(q.get('t'), 0, TL.MAX_TOKEN, 0);
+
+  function render() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = t(el.getAttribute('data-t')); });
+    document.querySelectorAll('.langs button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lang === lang)); });
+
+    var now = Date.now();
+    var live = $('live');
+    live.classList.toggle('on', net === 'live');
+    $('liveText').textContent = net === 'live' ? (state ? t('live') + ' · ' + t('updated', { x: ago(now - state.ts) }) : t('live')) : net === 'offline' ? t('offline') : t('connecting');
+
+    if (!TL.validTopic(topic)) { showStatus('hot', t('nolink')); $('ask').classList.add('hide'); return; }
+
+    if (state) {
+      $('clinic').textContent = state.c || 'TokenLive';
+      document.title = (state.c || 'TokenLive') + ' · ' + t('now') + ' ' + (state.n || '–');
+      $('doctor').textContent = state.d ? state.d + ' · ' + t('given', { n: state.i }) : t('given', { n: state.i });
+      $('current').textContent = state.n || '–';
+      $('current').classList.toggle('dim', !state.n);
+    }
+
+    // Clinic status banner
+    var stale = state && now - state.ts > 3 * 3600000;
+    if (!state) hideStatus();
+    else if (stale) showStatus('warn', t('stale', { t: clock(state.ts) }));
+    else if (state.st === 'break') showStatus('warn', state.at > now ? t('brk', { t: clock(state.at) }) : t('brk0'));
+    else if (state.st === 'notyet') showStatus('warn', state.at > now ? t('notyet', { t: clock(state.at) }) : t('notyet0'));
+    else if (state.st === 'closed') showStatus('warn', t('closed'));
+    else if (!state.n) showStatus('ok', t('start'));
+    else hideStatus();
+
+    // The patient's own place
+    if (!mine) { $('ask').classList.remove('hide'); $('mineCard').classList.add('hide'); return; }
+    $('ask').classList.add('hide');
+    var card = $('mineCard');
+    card.classList.remove('hide');
+    $('mineNum').textContent = mine;
+    var e = TL.estimate(state, mine, now);
+    card.classList.toggle('turn', e.kind === 'turn');
+    var meterWrap = $('meterWrap');
+    if (e.kind === 'turn') { $('eta').textContent = t('turn'); $('etaSub').textContent = ''; meterWrap.classList.add('hide'); }
+    else if (e.kind === 'passed') { $('eta').textContent = t('passed'); $('etaSub').textContent = ''; meterWrap.classList.add('hide'); }
+    else if (e.kind === 'closed') { $('eta').textContent = t('closed'); $('etaSub').textContent = ''; meterWrap.classList.add('hide'); }
+    else if (e.kind === 'none') { $('eta').textContent = t('connecting'); $('etaSub').textContent = ''; meterWrap.classList.add('hide'); }
+    else {
+      var who = e.ahead <= 0 ? t('ahead0') : e.ahead === 1 ? t('ahead1') : t('aheadN', { n: e.ahead });
+      $('eta').textContent = e.kind === 'near' ? t('near') : who;
+      $('etaSub').textContent = (e.kind === 'near' ? who + ' · ' : '') + t('inMin', { a: e.low, b: e.high }) + ' · ' + t('around', { t: clock(e.at) });
+      meterWrap.classList.remove('hide');
+      var total = Math.max(1, mine);
+      $('meter').style.width = Math.min(100, Math.max(4, (state.n / total) * 100)) + '%';
+    }
+    $('alerts').classList.toggle('hide', !('Notification' in window) || Notification.permission === 'granted' || e.kind === 'turn' || e.kind === 'passed');
+
+    if ((e.kind === 'near' || e.kind === 'turn') && lastKind !== e.kind && lastKind !== '') alertUser(e.kind);
+    lastKind = e.kind;
+  }
+
+  function ago(ms) { var m = Math.floor(ms / 60000); return m < 1 ? t('justnow') : t('minago', { n: m }); }
+  function showStatus(kind, text) { var b = $('status'); b.className = 'banner ' + kind; b.textContent = text; }
+  function hideStatus() { $('status').className = 'banner hide'; }
+
+  var audio;
+  function beep() {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.35].forEach(function (d) {
+        var o = audio.createOscillator(), g = audio.createGain();
+        o.frequency.value = 880; o.connect(g); g.connect(audio.destination);
+        g.gain.setValueAtTime(0.0001, audio.currentTime + d);
+        g.gain.exponentialRampToValueAtTime(0.4, audio.currentTime + d + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + d + 0.3);
+        o.start(audio.currentTime + d); o.stop(audio.currentTime + d + 0.32);
+      });
+    } catch (e) { }
+  }
+  function alertUser(kind) {
+    beep();
+    if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+    if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
+      navigator.serviceWorker.ready.then(function (reg) {
+        reg.showNotification(kind === 'turn' ? t('turn') : t('notifTitle'), { body: t('notifBody', { n: mine }), tag: 'tokenlive', renotify: true, data: { url: location.href }, vibrate: [300, 150, 300] });
+      }).catch(function () { });
+    }
+  }
+
+  function accept(msgText) {
+    var s = TL.parseState(msgText);
+    if (!s) return;
+    if (state && s.ts < state.ts) return; // never go back to an older update
+    var newSession = !state || state.s !== s.s;
+    state = s;
+    if (newSession) {
+      var saved = TL.int(store.get(tokenKey()), 0, TL.MAX_TOKEN, 0);
+      mine = linkToken || saved || 0;
+      if (linkToken) store.set(tokenKey(), String(linkToken));
+      linkToken = 0; // the link's token applies to the session it was sent in
+      lastKind = '';
+    }
+    render();
+  }
+
+  function poll() {
+    if (!TL.validTopic(topic)) return;
+    fetch('https://ntfy.sh/' + topic + '/json?poll=1&since=latest', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (txt) {
+        txt.split('\n').forEach(function (line) {
+          if (!line.trim()) return;
+          try { var m = JSON.parse(line); if (m.event === 'message') accept(m.message); } catch (e) { }
+        });
+        online();
+      })
+      .catch(maybeOffline);
+  }
+
+  function listen() {
+    if (!TL.validTopic(topic) || !window.EventSource) return;
+    try { if (es) es.close(); } catch (e) { }
+    es = new EventSource('https://ntfy.sh/' + topic + '/sse');
+    es.onopen = online;
+    es.onmessage = function (ev) {
+      online();
+      try { var m = JSON.parse(ev.data); if (m.event === 'message') accept(m.message); } catch (e) { }
+    };
+    es.onerror = maybeOffline;
+  }
+
+  // Events
+  document.querySelectorAll('.langs button').forEach(function (b) {
+    b.addEventListener('click', function () { lang = b.dataset.lang; store.set('tl-lang', lang); render(); });
+  });
+  function saveMine() {
+    var v = TL.int($('tok').value, 0, TL.MAX_TOKEN, 0);
+    if (!v) { $('tok').focus(); return; }
+    mine = v; lastKind = '';
+    if (state) store.set(tokenKey(), String(v));
+    beepUnlock();
+    render();
+  }
+  $('save').addEventListener('click', saveMine);
+  $('tok').addEventListener('keydown', function (e) { if (e.key === 'Enter') saveMine(); });
+  $('change').addEventListener('click', function () { $('tok').value = mine || ''; mine = 0; render(); $('tok').focus(); });
+  $('alerts').addEventListener('click', function () {
+    beepUnlock();
+    if ('Notification' in window) Notification.requestPermission().then(render);
+  });
+  // Browsers only allow sound after a tap, so the first tap prepares it.
+  function beepUnlock() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { } }
+
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { poll(); render(); } });
+  setInterval(render, 30000);        // keeps "updated x min ago" and times fresh
+  setInterval(poll, 60000);          // safety net if the live connection is quietly dropped
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { });
+  if (linkToken) { mine = linkToken; }
+  render();
+  poll();
+  listen();
+})();
+</script>
+</body>
+</html>
